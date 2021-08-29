@@ -4,7 +4,6 @@ streamlit==0.87.0
 tensorflow==2.4.1
 matplotlib==3.3.2
 opencv_python==4.5.3.56
-python3-opencv
 Pillow==8.3.1
 streamlit==0.79.0
 opencv-python-headless==4.5.1.48
