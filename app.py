@@ -10,10 +10,8 @@ warnings.filterwarnings("ignore")
 
 @st.cache
 def load_model():
-    st.write("Loading model...")
     
     model=tf.keras.models.load_model("./model/best-model-deeplearning-detector-COVID19.h5",compile=False)
-    st.write("Model loaded.")
     return model
 
 
@@ -38,10 +36,12 @@ def show_image_gradcam(model,image_array,col):
 def show_results(predictions):
     class_result=np.argmax(predictions)
     if class_result==0:
-        st.write("La radiografia corresponde a un paciente con COVID-19. Por su salud, acuda a un centro de vacunacion")
+        st.markdown("La radiografia corresponde a un paciente con **COVID-19**. Por su salud, acuda a un centro de vacunacion")
     elif class_result==1:
-        st.write("La radiografia corresponde a un paciente con una enfermedad distinta")
-    st.subheader("Diagnostico")
+        st.markdown("La radiografia corresponde a un paciente con una **ENFERMEDAD PULMONAR** distinta al COVID-19. Acuda a un medico para su tratamiento")
+    elif class_result==2:
+        st.markdown("La radiografia  de rayos-X corresponde a un **paciente NORMAL**")
+    st.subheader("Precision de diagnostico")
     col1,col2,col3=st.columns(3)
     col1.metric("COVID-19","{0:0.2f}%".format(predictions[0]*100))
     col2.metric("Enfermedades pulmonares","{0:0.2f}%".format(predictions[1]*100))
