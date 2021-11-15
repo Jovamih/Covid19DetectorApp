@@ -1,9 +1,5 @@
 import streamlit as st
-import tensorflow as tf
 from PIL import Image
-import io, base64
-from utilities.preprocessing import preprocessing_image
-from utilities.gradcam import VizGradCAM
 from utilities.preprocessing import datauri2pil, pil2datauri
 import numpy as np
 import requests
