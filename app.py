@@ -1,9 +1,12 @@
 import streamlit as st
 import tensorflow as tf
 from PIL import Image
+import io, base64
 from utilities.preprocessing import preprocessing_image
 from utilities.gradcam import VizGradCAM
+from utilities.preprocessing import datauri2pil, pil2datauri
 import numpy as np
+import requests
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -16,30 +19,25 @@ st.set_page_config(
 )
 
 
-@st.cache
-def load_model():
-    
-    model=tf.keras.models.load_model("./model/best-model-deeplearning-detector-COVID19.h5",compile=False)
-    return model
-
-
-def load_image(image_bytes,column=None):
+def show_image_xray(image_bytes,column=None):
     img=Image.open(image_bytes)
     column.image(img.resize((300,300)),caption="Radiografia X-Ray")
-    array_img=preprocessing_image(image_bytes,expand_dims=True)
-    return array_img
 
-@st.cache
-def get_prediction(model,image_array):
 
-    prediction=model.predict(image_array)
-    
-    return prediction[0]
 
-def show_image_gradcam(model,image_array,col):
-    grad_cam=VizGradCAM(model,image_array,interpolant=0.36)
-    img_gc=Image.fromarray(grad_cam)
-    col.image(img_gc.resize((300,300)),caption="GRAD-CAM")
+def show_image_gradcam(img_gc,column):
+    column.image(img_gc.resize((300,300)),caption="GRAD-CAM")
+
+def consume_api_detector(content):
+    API_URL="https://apicovid19detector-5ou3s2kqgq-uc.a.run.app/predict"
+    data={
+        "image":content
+    }
+    response=requests.post(API_URL,json=data)
+    if response.status_code==200:
+        return response.json()
+    else:
+        return None
 
 def show_results(predictions):
     class_result=np.argmax(predictions)
@@ -61,17 +59,20 @@ def main():
     st.subheader("Desarrollador: Johan Mitma - UNMSM -2021")
     file_image=st.file_uploader("Seleccione un archivo de imagen",type=["png","jpg","jpeg"])
 
-    model=load_model()
+    #model=load_model()
     predictions=None
    
     if file_image is not None:
         col1,col2=st.columns(2)
-        image_array=load_image(file_image,col1)
-        
-        array_img=preprocessing_image(file_image,expand_dims=False)
-        show_image_gradcam(model,array_img,col2)
-        predictions=get_prediction(model,image_array)
-        show_results(predictions)
+        show_image_xray(file_image,col1)
+        prediction=consume_api_detector(pil2datauri(Image.open(file_image)))
+
+        if prediction is not None:
+            show_image_gradcam(datauri2pil(prediction["gradcam"]),col2)
+            predictions=prediction["prediction"]
+            show_results(predictions[0])
+        else:
+            st.error("La API no se encuentra disponible")
     else:
         st.success("Por favor, suba una radiografia de rayos-X para su descarte de COVID-19")
         
